@@ -17,7 +17,7 @@ export interface ScholarshipScheme {
   name: string;
   shortName: string;
   ministry: string;
-  level: 'Pre-Matric' | 'Post-Matric' | 'Higher Education' | 'Fellowship' | 'Overseas';
+  level: 'Pre-Matric' | 'Post-Matric' | 'Higher Education' | 'Fellowship' | 'Overseas' | 'Skill Development' | 'Education Loan' | 'Livelihood' | 'Entrepreneurship' | 'Women Empowerment' | 'School Education' | 'Community Finance';
   description: string;
   eligibility: EligibilityCriteria;
   benefits: Benefit[];
@@ -144,9 +144,9 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
-  language: 'en' | 'hi' | 'te';
+  language: Language;
 }
 
-export type Language = 'en' | 'hi' | 'te';
+export type Language = 'en' | 'hi' | 'te' | 'kn' | 'ta' | 'ml';
 
-export type NavTab = 'home' | 'scholarships' | 'documents' | 'jago' | 'profile';
+export type NavTab = 'home' | 'scholarships' | 'programmes' | 'documents' | 'jago' | 'profile';

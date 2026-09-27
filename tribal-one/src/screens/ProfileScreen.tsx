@@ -1,25 +1,75 @@
 import { useState } from 'react';
-import { ChevronRight, LogOut, Shield, FileText, ChevronDown, ChevronUp, Phone } from 'lucide-react';
+import { ChevronRight, LogOut, Shield, FileText, ChevronDown, ChevronUp, Phone, Globe, Check } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { NotificationItem } from '../components/NotificationItem';
 import { StatusTimeline } from '../components/StatusTimeline';
 import { formatDate } from '../utils/format';
 import { SCHOLARSHIPS } from '../data/scholarships';
+import { SUPPORTED_LANGUAGES } from '../utils/translations';
 
-type Section = 'main' | 'notifications' | 'payments' | 'eligibility' | 'privacy' | 'terms';
+type Section = 'main' | 'notifications' | 'payments' | 'eligibility' | 'privacy' | 'terms' | 'language';
 
 export function ProfileScreen() {
-  const { student, notifications, payments, logout, markAllRead, unreadCount } = useApp();
+  const { student, notifications, payments, logout, markAllRead, unreadCount, language, setLanguage, t } = useApp();
   const [section, setSection] = useState<Section>('main');
+
+  if (section === 'language') {
+    return (
+      <SubPage title={t('app_language')} onBack={() => setSection('main')}>
+        <div className="p-4 space-y-4">
+          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+            <h2 className="text-sm font-bold text-gray-800">{t('select_language')}</h2>
+            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+              {t('language_description')}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100 overflow-hidden">
+            {SUPPORTED_LANGUAGES.map((langOpt) => {
+              const isSelected = language === langOpt.code;
+              return (
+                <button
+                  key={langOpt.code}
+                  id={`lang-select-${langOpt.code}`}
+                  onClick={() => setLanguage(langOpt.code)}
+                  className={`w-full flex items-center justify-between px-4 py-4 text-left transition-colors ${
+                    isSelected ? 'bg-teal-50/70' : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3.5">
+                    <span className="text-2xl">{langOpt.flag}</span>
+                    <div>
+                      <p className={`text-base leading-tight ${isSelected ? 'font-bold text-[#0F766E]' : 'font-semibold text-gray-800'}`}>
+                        {langOpt.nativeName}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">{langOpt.name}</p>
+                    </div>
+                  </div>
+                  {isSelected ? (
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-[#0F766E] bg-teal-100/70 px-2.5 py-1 rounded-full">
+                      <Check size={14} strokeWidth={2.5} />
+                      <span>{t('active_language')}</span>
+                    </div>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </SubPage>
+    );
+  }
 
   if (section === 'notifications') {
     return (
-      <SubPage title="Notifications" onBack={() => setSection('main')}>
+      <SubPage title={t('notifications')} onBack={() => setSection('main')}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white">
-          <p className="text-sm text-gray-500">{unreadCount} unread</p>
+          <p className="text-sm text-gray-500">{unreadCount > 0 ? `${unreadCount} ${t('unread')}` : t('all_caught_up')}</p>
           {unreadCount > 0 && (
             <button id="mark-all-read-btn" onClick={markAllRead} className="text-xs font-bold text-[#0F766E]">
-              Mark all read
+              {t('mark_all_read')}
             </button>
           )}
         </div>
@@ -32,7 +82,7 @@ export function ProfileScreen() {
 
   if (section === 'payments') {
     return (
-      <SubPage title="DBT Payment History" onBack={() => setSection('main')}>
+      <SubPage title={t('dbt_payment_history')} onBack={() => setSection('main')}>
         <div className="px-4 space-y-4 mt-4 pb-6">
           {payments.length === 0
             ? <p className="text-sm text-gray-500 text-center py-10">No payment records found.</p>
@@ -44,7 +94,7 @@ export function ProfileScreen() {
 
   if (section === 'eligibility') {
     return (
-      <SubPage title="Eligibility Checker" onBack={() => setSection('main')}>
+      <SubPage title={t('eligibility_checker')} onBack={() => setSection('main')}>
         <EligibilityChecker />
       </SubPage>
     );
@@ -52,7 +102,7 @@ export function ProfileScreen() {
 
   if (section === 'privacy') {
     return (
-      <SubPage title="Privacy Policy" onBack={() => setSection('main')}>
+      <SubPage title={t('privacy_policy')} onBack={() => setSection('main')}>
         <PrivacyPolicy />
       </SubPage>
     );
@@ -60,7 +110,7 @@ export function ProfileScreen() {
 
   if (section === 'terms') {
     return (
-      <SubPage title="Terms of Service" onBack={() => setSection('main')}>
+      <SubPage title={t('terms_of_service')} onBack={() => setSection('main')}>
         <TermsOfService />
       </SubPage>
     );
@@ -72,20 +122,26 @@ export function ProfileScreen() {
       <header className="bg-[#0F766E] px-4 pt-14 pb-8">
         <div className="flex items-center gap-4">
           <div
-            className="w-16 h-16 rounded-full flex items-center justify-center shrink-0 text-[#0F766E] text-2xl font-black"
-            style={{ background: 'rgba(255,255,255,0.95)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+            className="w-16 h-16 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 border-white/80 shadow-md bg-white"
           >
-            {student?.name?.charAt(0) ?? 'U'}
+            <img
+              src="/ramesh_paharia.jpg"
+              alt={student?.name ?? 'Profile Photo'}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-white font-bold text-lg leading-tight truncate">{student?.name}</p>
             <p className="text-white/65 text-xs mt-0.5 truncate">{student?.course}</p>
             <div className="flex items-center gap-2 mt-2">
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30">
-                Scheduled Tribe (ST)
+                {t('scheduled_tribe')}
               </span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white/15 text-white/80">
-                Verified
+                {t('verified')}
               </span>
             </div>
           </div>
@@ -93,44 +149,98 @@ export function ProfileScreen() {
       </header>
 
       <div className="px-4 -mt-4 space-y-4">
+        {/* App Language Section */}
+        <section className="card overflow-hidden" aria-label="Language selection">
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between" style={{ background: '#f8fafc' }}>
+            <div className="flex items-center gap-2">
+              <Globe size={15} className="text-[#0F766E]" />
+              <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">{t('app_language')}</p>
+            </div>
+            <button
+              onClick={() => setSection('language')}
+              className="text-[11px] font-semibold text-[#0F766E] hover:underline"
+            >
+              {t('select_language')} →
+            </button>
+          </div>
+
+          <div className="p-3">
+            <p className="text-xs text-gray-500 mb-2.5 px-0.5">{t('language_description')}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {SUPPORTED_LANGUAGES.map((langOpt) => {
+                const isSelected = language === langOpt.code;
+                return (
+                  <button
+                    key={langOpt.code}
+                    id={`profile-lang-chip-${langOpt.code}`}
+                    onClick={() => setLanguage(langOpt.code)}
+                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition-all ${
+                      isSelected
+                        ? 'bg-[#0F766E] text-white border-[#0F766E] shadow-sm'
+                        : 'bg-white text-gray-800 border-gray-200 hover:border-teal-300 hover:bg-teal-50/30'
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <p className={`text-sm leading-tight truncate ${isSelected ? 'font-bold text-white' : 'font-semibold text-gray-800'}`}>
+                        {langOpt.nativeName}
+                      </p>
+                      <p className={`text-[10px] mt-0.5 truncate ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
+                        {langOpt.name}
+                      </p>
+                    </div>
+                    {isSelected && <Check size={14} strokeWidth={2.5} className="text-white shrink-0 ml-1" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
         {/* Student Profile */}
         <section className="card overflow-hidden" aria-label="Student information">
           <div className="px-4 py-3 border-b border-gray-100" style={{ background: '#f8fafc' }}>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Student Profile</p>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">{t('student_profile')}</p>
           </div>
           <div>
-            <ProfileRow label="Student ID" value={student?.id ?? '—'} mono />
-            <ProfileRow label="APAAR ID" value={student?.aparId ?? '—'} mono />
-            <ProfileRow label="Aadhaar" value={student?.aadhaar ?? '—'} mono />
-            <ProfileRow label="Mobile" value={student?.mobile ?? '—'} />
-            <ProfileRow label="Date of Birth" value={student?.dob ? formatDate(student.dob) : '—'} />
-            <ProfileRow label="State" value={student?.state ?? '—'} />
-            <ProfileRow label="District" value={student?.district ?? '—'} />
-            <ProfileRow label="Institution" value={student?.institution ?? '—'} />
-            <ProfileRow label="Course" value={student?.course ?? '—'} />
-            <ProfileRow label="Academic Year" value={student?.academicYear ?? '—'} />
-            <ProfileRow label="Bank IFSC" value={student?.ifsc ?? '—'} mono last />
+            <ProfileRow label={t('student_id')} value={student?.id ?? '—'} mono />
+            <ProfileRow label={t('apaar_id')} value={student?.aparId ?? '—'} mono />
+            <ProfileRow label={t('aadhaar')} value={student?.aadhaar ?? '—'} mono />
+            <ProfileRow label={t('mobile')} value={student?.mobile ?? '—'} />
+            <ProfileRow label={t('dob')} value={student?.dob ? formatDate(student.dob) : '—'} />
+            <ProfileRow label={t('state')} value={student?.state ?? '—'} />
+            <ProfileRow label={t('district')} value={student?.district ?? '—'} />
+            <ProfileRow label={t('institution')} value={student?.institution ?? '—'} />
+            <ProfileRow label={t('course')} value={student?.course ?? '—'} />
+            <ProfileRow label={t('academic_year')} value={student?.academicYear ?? '—'} />
+            <ProfileRow label={t('bank_ifsc')} value={student?.ifsc ?? '—'} mono last />
           </div>
         </section>
 
         {/* Quick actions */}
         <section className="card overflow-hidden" aria-label="Quick links">
           <MenuRow
+            id="nav-language-menu"
+            label={t('app_language')}
+            sub={`${SUPPORTED_LANGUAGES.find((l) => l.code === language)?.nativeName} (${SUPPORTED_LANGUAGES.find((l) => l.code === language)?.name})`}
+            Icon={Globe}
+            onClick={() => setSection('language')}
+          />
+          <MenuRow
             id="nav-notifs"
-            label="Notifications"
-            sub={unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
+            label={t('notifications')}
+            sub={unreadCount > 0 ? `${unreadCount} ${t('unread')}` : t('all_caught_up')}
             badge={unreadCount > 0 ? String(unreadCount) : undefined}
             onClick={() => setSection('notifications')}
           />
           <MenuRow
             id="nav-payments"
-            label="DBT Payment History"
+            label={t('dbt_payment_history')}
             sub="View all scholarship disbursements"
             onClick={() => setSection('payments')}
           />
           <MenuRow
             id="nav-eligibility"
-            label="Eligibility Checker"
+            label={t('eligibility_checker')}
             sub="Find out which schemes you qualify for"
             onClick={() => setSection('eligibility')}
             last
@@ -140,24 +250,24 @@ export function ProfileScreen() {
         {/* Support & Legal */}
         <section className="card overflow-hidden" aria-label="Support and legal">
           <div className="px-4 py-3 border-b border-gray-100" style={{ background: '#f8fafc' }}>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Support & Legal</p>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">{t('support_legal')}</p>
           </div>
           <MenuRow
             id="nav-help"
-            label="Help & Support"
-            sub="MoTA Helpline: 1800-11-2255 (Toll-free)"
+            label={t('help_support')}
+            sub={t('helpline')}
             Icon={Phone}
             onClick={() => {}}
           />
           <MenuRow
             id="nav-privacy"
-            label="Privacy Policy"
+            label={t('privacy_policy')}
             Icon={Shield}
             onClick={() => setSection('privacy')}
           />
           <MenuRow
             id="nav-terms"
-            label="Terms of Service"
+            label={t('terms_of_service')}
             Icon={FileText}
             onClick={() => setSection('terms')}
             last
@@ -165,10 +275,11 @@ export function ProfileScreen() {
         </section>
 
         {/* App info */}
-        <div className="card-sm px-4 py-3">
+        <div className="card-sm px-4 py-3.5 flex items-center gap-3.5">
+          <img src="/logo.jpg" alt="Tribal One" className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-xs border border-gray-100" />
           <p className="text-xs text-gray-500 leading-relaxed">
             <span className="font-semibold text-gray-700">Tribal One v1.0.0</span> — SIH 2026 prototype for the
-            Ministry of Tribal Affairs, Government of India. Not an official government application.
+            Ministry of Tribal Affairs, Government of India.
           </p>
         </div>
 
@@ -180,7 +291,7 @@ export function ProfileScreen() {
           aria-label="Sign out"
         >
           <LogOut size={16} />
-          Sign Out
+          {t('sign_out')}
         </button>
       </div>
     </div>
@@ -239,6 +350,7 @@ function MenuRow({
 }
 
 function SubPage({ title, onBack, children }: { title: string; onBack: () => void; children: React.ReactNode }) {
+  const { t } = useApp();
   return (
     <div className="pb-20 bg-[#f5f7fa]">
       <header className="bg-[#0F766E] px-4 pt-14 pb-5">
@@ -248,7 +360,7 @@ function SubPage({ title, onBack, children }: { title: string; onBack: () => voi
           className="flex items-center gap-1.5 text-white/70 text-sm mb-3"
           aria-label="Back to profile"
         >
-          <ChevronRight size={16} className="rotate-180" /> Back
+          <ChevronRight size={16} className="rotate-180" /> {t('back')}
         </button>
         <h1 className="text-white font-bold text-xl tracking-tight">{title}</h1>
       </header>

@@ -8,6 +8,7 @@ import type {
   NavTab,
   Language,
 } from '../types';
+import { getTranslation, type TranslationKey } from '../utils/translations';
 
 interface AppContextType {
   isLoggedIn: boolean;
@@ -23,6 +24,7 @@ interface AppContextType {
   logout: () => void;
   setActiveTab: (tab: NavTab) => void;
   setLanguage: (lang: Language) => void;
+  t: (key: TranslationKey) => string;
   markNotificationRead: (id: string) => void;
   markAllRead: () => void;
   uploadDocument: (docId: string) => void;
@@ -176,7 +178,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>(DEMO_NOTIFICATIONS);
   const [payments] = useState<PaymentRecord[]>(DEMO_PAYMENTS);
   const [activeTab, setActiveTab] = useState<NavTab>('home');
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguageState] = useState<Language>(() => {
+    try {
+      const saved = localStorage.getItem('tribal_one_lang') as Language | null;
+      if (saved && ['en', 'te', 'hi', 'kn', 'ta', 'ml'].includes(saved)) {
+        return saved;
+      }
+    } catch {}
+    return 'en';
+  });
+
+  const setLanguage = useCallback((lang: Language) => {
+    setLanguageState(lang);
+    try {
+      localStorage.setItem('tribal_one_lang', lang);
+    } catch {}
+  }, []);
+
+  const t = useCallback(
+    (key: TranslationKey) => getTranslation(language, key),
+    [language]
+  );
 
   // Restore session from localStorage
   useEffect(() => {
@@ -240,6 +262,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         logout,
         setActiveTab,
         setLanguage,
+        t,
         markNotificationRead,
         markAllRead,
         uploadDocument,

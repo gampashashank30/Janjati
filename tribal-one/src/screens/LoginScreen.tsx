@@ -56,17 +56,17 @@ export function LoginScreen() {
         }} aria-hidden />
 
         <div className="relative px-6 pt-12 pb-10">
-          {/* Gov badge */}
-          <div className="flex items-center gap-3 mb-8">
+          {/* Gov & Portal Badge */}
+          <div className="flex items-center gap-3.5 mb-8">
             <div
-              className="w-11 h-11 rounded-full bg-white flex items-center justify-center shrink-0"
-              style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+              className="w-13 h-13 rounded-2xl bg-white flex items-center justify-center shrink-0 p-1 overflow-hidden shadow-md"
+              style={{ width: '52px', height: '52px' }}
             >
-              <span className="text-[#0F766E] font-black text-xs text-center leading-tight">भा<br />र</span>
+              <img src="/logo.jpg" alt="Tribal One Logo" className="w-full h-full object-cover rounded-xl" />
             </div>
             <div>
-              <p className="text-white font-semibold text-sm leading-tight">Ministry of Tribal Affairs</p>
-              <p className="text-white/60 text-[11px] mt-0.5">Government of India</p>
+              <p className="text-white font-bold text-sm leading-tight">Ministry of Tribal Affairs</p>
+              <p className="text-white/70 text-[11px] mt-0.5">Government of India · जनजातीय कार्य मंत्रालय</p>
             </div>
           </div>
 

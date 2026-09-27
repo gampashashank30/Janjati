@@ -1,32 +1,110 @@
-import { useState } from 'react';
-import { ArrowLeft, ChevronDown, ChevronUp, ExternalLink, BookOpen, GraduationCap, Globe, Award, Landmark } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  BookOpen,
+  GraduationCap,
+  Globe,
+  Award,
+  Landmark,
+  School,
+  Sparkles,
+  Coins,
+  HeartHandshake,
+  Building,
+  Briefcase,
+  Trees,
+  Users,
+  Search,
+  Filter,
+} from 'lucide-react';
 import { SCHOLARSHIPS } from '../data/scholarships';
 import { ScholarshipCard } from '../components/ScholarshipCard';
 import { StatusTimeline } from '../components/StatusTimeline';
 import { useApp } from '../context/AppContext';
 import { formatCurrency } from '../utils/format';
 import type { ScholarshipScheme } from '../types';
+import {
+  SCHOLARSHIP_CATEGORY_LABELS,
+  UI_TERMS,
+  getLocalizedScholarship,
+} from '../utils/localizedContent';
 
 type View = 'list' | 'detail' | 'apply';
 
-// Scheme icon mapping
+// Comprehensive scheme icon mapping for all 15 verified schemes
 const SCHEME_ICONS: Record<string, { Icon: React.FC<{ size?: number; style?: React.CSSProperties }>; bg: string; color: string }> = {
-  pre_matric:  { Icon: BookOpen,    bg: '#eff6ff', color: '#2563eb' },
-  post_matric: { Icon: GraduationCap, bg: '#f5f3ff', color: '#7c3aed' },
-  top_class:   { Icon: Award,       bg: '#f0fdf4', color: '#16a34a' },
-  nfst:        { Icon: Landmark,    bg: '#fff7ed', color: '#c2410c' },
-  nos:         { Icon: Globe,       bg: '#f0faf9', color: '#0F766E' },
+  pre_matric:        { Icon: BookOpen,       bg: '#eff6ff', color: '#2563eb' },
+  post_matric:       { Icon: GraduationCap,  bg: '#f5f3ff', color: '#7c3aed' },
+  top_class:         { Icon: Award,          bg: '#f0fdf4', color: '#16a34a' },
+  nfst:              { Icon: Landmark,       bg: '#fff7ed', color: '#c2410c' },
+  nos:               { Icon: Globe,          bg: '#f0faf9', color: '#0F766E' },
+  emrs:              { Icon: School,         bg: '#eef2ff', color: '#4f46e5' },
+  goal_program:      { Icon: Sparkles,       bg: '#ecfeff', color: '#0891b2' },
+  asry_loan:         { Icon: Coins,          bg: '#fef3c7', color: '#d97706' },
+  amsy_scheme:       { Icon: HeartHandshake, bg: '#fdf4ff', color: '#9333ea' },
+  nstfdc_term_loan:  { Icon: Building,       bg: '#fdf2f8', color: '#db2777' },
+  vcf_st:            { Icon: Briefcase,      bg: '#fef2f2', color: '#dc2626' },
+  pm_janman_hostels: { Icon: School,         bg: '#ecfdf5', color: '#059669' },
+  tfdes_scheme:      { Icon: Trees,          bg: '#f0fdf4', color: '#15803d' },
+  micro_credit_st:   { Icon: Users,          bg: '#fffbeb', color: '#b45309' },
+  pmvky_fellowship:  { Icon: GraduationCap,  bg: '#eff6ff', color: '#1d4ed8' },
 };
 
+const CATEGORIES = [
+  { id: 'all', label: 'All Schemes' },
+  { id: 'scholarships', label: 'Scholarships' },
+  { id: 'fellowship', label: 'Fellowships' },
+  { id: 'loans', label: 'Loans & Credit' },
+  { id: 'school', label: 'School & PVTG' },
+  { id: 'livelihood', label: 'Livelihood & Skills' },
+] as const;
+
 export function ScholarshipsScreen() {
-  const { applications, payments } = useApp();
+  const { applications, payments, language, t } = useApp();
   const [view, setView] = useState<View>('list');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const selectedScheme = SCHOLARSHIPS.find((s) => s.id === selectedId);
 
   function handleView(id: string) { setSelectedId(id); setView('detail'); }
   function handleApply(id: string) { setSelectedId(id); setView('apply'); }
+
+  const filteredSchemes = useMemo(() => {
+    return SCHOLARSHIPS.filter((scheme) => {
+      // Category filter
+      let matchesCategory = true;
+      if (selectedCategory === 'scholarships') {
+        matchesCategory = ['Pre-Matric', 'Post-Matric', 'Higher Education', 'Overseas'].includes(scheme.level);
+      } else if (selectedCategory === 'fellowship') {
+        matchesCategory = scheme.level === 'Fellowship';
+      } else if (selectedCategory === 'loans') {
+        matchesCategory = ['Education Loan', 'Entrepreneurship', 'Community Finance'].includes(scheme.level);
+      } else if (selectedCategory === 'school') {
+        matchesCategory = scheme.level === 'School Education';
+      } else if (selectedCategory === 'livelihood') {
+        matchesCategory = ['Livelihood', 'Skill Development', 'Women Empowerment'].includes(scheme.level);
+      }
+
+      // Search query filter
+      let matchesSearch = true;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        matchesSearch =
+          scheme.name.toLowerCase().includes(q) ||
+          scheme.shortName.toLowerCase().includes(q) ||
+          scheme.level.toLowerCase().includes(q) ||
+          scheme.description.toLowerCase().includes(q) ||
+          scheme.schemeCode.toLowerCase().includes(q);
+      }
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [selectedCategory, searchQuery]);
 
   if (view === 'detail' && selectedScheme) {
     return (
@@ -51,37 +129,63 @@ export function ScholarshipsScreen() {
   }
 
   return (
-    <div className="pb-20 bg-[#f5f7fa]">
+    <div className="pb-24 bg-[#f5f7fa] min-h-screen">
       {/* Header */}
-      <header className="bg-[#0F766E] px-4 pt-14 pb-6">
-        <p className="text-white/60 text-[11px] font-medium uppercase tracking-wide mb-0.5">Ministry of Tribal Affairs</p>
-        <h1 className="text-white text-xl font-bold tracking-tight">MoTA Scholarship Schemes</h1>
-        <p className="text-white/65 text-xs mt-1">5 Central Sector Schemes for Scheduled Tribe Students</p>
+      <header className="bg-[#0F766E] px-4 pt-12 pb-6">
+        <p className="text-white/70 text-[11px] font-semibold uppercase tracking-wider mb-1">
+          {t('mota_title')} & NSTFDC
+        </p>
+        <h1 className="text-white text-xl font-bold tracking-tight">
+          {UI_TERMS.scholarships_title[language] || 'Tribal Schemes & Scholarships'}
+        </h1>
+        <p className="text-white/80 text-xs mt-1">
+          {UI_TERMS.scholarships_sub[language] || '15 Verified Central Sector Schemes for ST Students & Citizens'}
+        </p>
+
+        {/* Search input */}
+        <div className="relative mt-4">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('search_scholarships_placeholder')}
+            className="w-full bg-white/95 pl-10 pr-4 py-2.5 rounded-xl text-xs text-gray-800 placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+          />
+        </div>
       </header>
 
-      {/* Quick scheme icon grid — inspired by Haqdarshak */}
-      <div className="px-4 -mt-5">
-        <div className="card p-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Schemes at a Glance</p>
-          <div className="grid grid-cols-5 gap-2">
+      {/* Quick scheme icon carousel */}
+      <div className="px-4 -mt-3">
+        <div className="card p-3.5 shadow-sm">
+          <div className="flex items-center justify-between mb-2.5">
+            <p className="text-[11px] font-bold text-gray-600 uppercase tracking-wide">
+              {language === 'te' ? 'అన్ని 15 పథకాలు' : language === 'hi' ? 'सभी 15 योजनाएं' : language === 'kn' ? 'ಎಲ್ಲಾ 15 ಯೋಜನೆಗಳು' : language === 'ta' ? 'அனைத்து 15 திட்டங்கள்' : language === 'ml' ? 'എല്ലാ 15 പദ്ധതികളും' : 'All 15 Schemes at a Glance'}
+            </p>
+            <span className="text-[10px] bg-teal-50 text-[#0F766E] font-semibold px-2 py-0.5 rounded-full">
+              {SCHOLARSHIPS.length} {t('verified')}
+            </span>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-1.5 scrollbar-none">
             {SCHOLARSHIPS.map((s) => {
-              const cfg = SCHEME_ICONS[s.id];
+              const cfg = SCHEME_ICONS[s.id] ?? { Icon: BookOpen, bg: '#eff6ff', color: '#2563eb' };
+              const localized = getLocalizedScholarship(s, language);
               return (
                 <button
                   key={s.id}
                   id={`quick-scheme-${s.id}`}
                   onClick={() => handleView(s.id)}
-                  className="flex flex-col items-center gap-1.5 group"
-                  aria-label={s.name}
+                  className="flex flex-col items-center gap-1 shrink-0 group w-14"
+                  aria-label={localized.name}
                 >
                   <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-active:scale-95"
-                    style={{ background: cfg.bg, border: `1.5px solid ${cfg.color}20` }}
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-active:scale-95 shadow-xs"
+                    style={{ background: cfg.bg, border: `1.5px solid ${cfg.color}30` }}
                   >
                     <cfg.Icon size={20} style={{ color: cfg.color }} />
                   </div>
-                  <span className="text-[9px] font-semibold text-gray-500 text-center leading-tight">
-                    {s.shortName.split(' ')[0]}
+                  <span className="text-[9px] font-semibold text-gray-600 text-center leading-tight line-clamp-1 w-full">
+                    {localized.shortName.split(' ')[0]}
                   </span>
                 </button>
               );
@@ -90,23 +194,67 @@ export function ScholarshipsScreen() {
         </div>
       </div>
 
+      {/* Category filter pills */}
+      <div className="px-4 mt-3">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {CATEGORIES.map((cat) => {
+            const active = selectedCategory === cat.id;
+            const categoryLabel = SCHOLARSHIP_CATEGORY_LABELS[cat.id]?.[language] || cat.label;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+                  active
+                    ? 'bg-[#0F766E] text-white shadow-xs'
+                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                {categoryLabel}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Full scheme cards */}
-      <div className="px-4 mt-4 space-y-3 mb-4">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">All Schemes</p>
-        {SCHOLARSHIPS.map((scheme) => (
-          <ScholarshipCard
-            key={scheme.id}
-            scheme={scheme}
-            application={applications.find((a) => a.schemeId === scheme.id)}
-            onView={handleView}
-            onApply={handleApply}
-          />
-        ))}
+      <div className="px-4 mt-3 space-y-3 mb-4">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Showing {filteredSchemes.length} of {SCHOLARSHIPS.length} Schemes
+          </p>
+          {(selectedCategory !== 'all' || searchQuery) && (
+            <button
+              onClick={() => { setSelectedCategory('all'); setSearchQuery(''); }}
+              className="text-xs text-[#0F766E] font-semibold hover:underline"
+            >
+              Reset filters
+            </button>
+          )}
+        </div>
+
+        {filteredSchemes.length === 0 ? (
+          <div className="card p-8 text-center">
+            <Filter size={32} className="mx-auto text-gray-300 mb-2" />
+            <p className="text-sm font-semibold text-gray-700">No schemes found</p>
+            <p className="text-xs text-gray-400 mt-1">Try adjusting your search query or category filter</p>
+          </div>
+        ) : (
+          filteredSchemes.map((scheme) => (
+            <ScholarshipCard
+              key={scheme.id}
+              scheme={scheme}
+              application={applications.find((a) => a.schemeId === scheme.id)}
+              onView={handleView}
+              onApply={handleApply}
+            />
+          ))
+        )}
 
         <div className="card-sm px-4 py-3">
           <p className="text-[11px] text-gray-500 leading-relaxed">
-            <span className="font-semibold text-gray-700">Official Sources:</span>{' '}
-            tribal.nic.in · scholarships.gov.in · sfmp.tribal.nic.in
+            <span className="font-semibold text-gray-700">Official Portals:</span>{' '}
+            tribal.nic.in · scholarships.gov.in · nstfdc.tribal.gov.in · emrs.tribal.gov.in · goal.tribal.gov.in · vcfst.in · pmjanman.tribal.gov.in
           </p>
         </div>
       </div>
@@ -146,15 +294,21 @@ function SchemeDetail({
   onBack: () => void;
   onApply: () => void;
 }) {
-  const cfg = SCHEME_ICONS[scheme.id];
+  const { language, t } = useApp();
+  const localized = getLocalizedScholarship(scheme, language);
+  const cfg = SCHEME_ICONS[scheme.id] ?? { Icon: BookOpen, bg: '#eff6ff', color: '#2563eb' };
   const hasApplied = application && application.status !== 'not_applied';
+
+  const overviewTitle = language === 'te' ? 'అవలోకనం' : language === 'hi' ? 'अवलोकन' : language === 'kn' ? 'ಅವಲೋಕನ' : language === 'ta' ? 'கண்ணோட்டம்' : language === 'ml' ? 'അവലോകനം' : 'Overview';
+  const eligibilityTitle = language === 'te' ? 'అర్హత ప్రమాణాలు' : language === 'hi' ? 'पात्रता मानदंड' : language === 'kn' ? 'ಅರ್ಹತಾ ಮಾನದಂಡಗಳು' : language === 'ta' ? 'தகுதி வரம்புகள்' : language === 'ml' ? 'യോഗ്യതാ മാനദണ്ഡങ്ങൾ' : 'Eligibility Criteria';
+  const benefitsTitle = language === 'te' ? 'ఆర్థిక ప్రయోజనాలు' : language === 'hi' ? 'वित्तीय लाभ' : language === 'kn' ? 'ಆರ್ಥಿಕ ಪ್ರಯೋಜನಗಳು' : language === 'ta' ? 'நிதி சலுகைகள்' : language === 'ml' ? 'സാമ്പത്തിക ആനുകൂല്യങ്ങൾ' : 'Benefits';
 
   return (
     <div className="pb-32 bg-[#f5f7fa]">
       {/* Header */}
       <header className="bg-[#0F766E] px-4 pt-14 pb-6">
         <button id="back-btn" onClick={onBack} className="flex items-center gap-1.5 text-white/70 text-sm mb-5" aria-label="Back">
-          <ArrowLeft size={16} /> Back
+          <ArrowLeft size={16} /> {t('back')}
         </button>
         <div className="flex items-start gap-3">
           <div
@@ -165,9 +319,9 @@ function SchemeDetail({
             <cfg.Icon size={22} style={{ color: '#fff' }} />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-white/60 uppercase tracking-wide">{scheme.schemeCode}</span>
-            <h1 className="text-white font-bold text-base leading-snug mt-0.5">{scheme.name}</h1>
-            <p className="text-white/60 text-xs mt-0.5">{scheme.ministry}</p>
+            <span className="text-[10px] font-bold text-white/60 uppercase tracking-wide">{localized.schemeCode}</span>
+            <h1 className="text-white font-bold text-base leading-snug mt-0.5">{localized.name}</h1>
+            <p className="text-white/60 text-xs mt-0.5">{localized.ministry}</p>
           </div>
         </div>
       </header>
@@ -175,8 +329,8 @@ function SchemeDetail({
       {/* Sections */}
       <div className="px-4 mt-4 space-y-3">
         <div className="card overflow-hidden">
-          <Section title="Overview" defaultOpen>
-            <p className="text-sm text-gray-700 leading-relaxed">{scheme.description}</p>
+          <Section title={overviewTitle} defaultOpen>
+            <p className="text-sm text-gray-700 leading-relaxed">{localized.description}</p>
             <a
               href={scheme.applicationUrl}
               target="_blank"
@@ -187,20 +341,29 @@ function SchemeDetail({
             </a>
           </Section>
 
-          <Section title="Eligibility Criteria">
+          <Section title={eligibilityTitle}>
             <div className="space-y-2">
-              <InfoRow label="Category" value={scheme.eligibility.category.join(', ')} />
+              <InfoRow
+                label={language === 'te' ? 'వర్గం' : language === 'hi' ? 'श्रेणी' : language === 'kn' ? 'ವರ್ಗ' : language === 'ta' ? 'பிரிவு' : language === 'ml' ? 'വിഭാഗം' : 'Category'}
+                value={scheme.eligibility.category.join(', ')}
+              />
               {scheme.eligibility.incomeLimit && (
-                <InfoRow label="Income Limit" value={`${formatCurrency(scheme.eligibility.incomeLimit)} per annum`} />
+                <InfoRow
+                  label={UI_TERMS.income_limit[language] || 'Income Limit'}
+                  value={`${formatCurrency(scheme.eligibility.incomeLimit)} per annum`}
+                />
               )}
               {scheme.eligibility.classRange && (
                 <InfoRow
-                  label="Class / Level"
+                  label={language === 'te' ? 'తరగతి / స్థాయి' : language === 'hi' ? 'कक्षा / स्तर' : language === 'kn' ? 'ತರಗತಿ / ಮಟ್ಟ' : language === 'ta' ? 'வகுப்பு / நிலை' : language === 'ml' ? 'ക്ലാസ് / തരം' : 'Class / Level'}
                   value={`Class ${scheme.eligibility.classRange.min}–${scheme.eligibility.classRange.max === 999 ? 'and above' : scheme.eligibility.classRange.max}`}
                 />
               )}
               {scheme.eligibility.ageLimit?.max && (
-                <InfoRow label="Age Limit" value={`Up to ${scheme.eligibility.ageLimit.max} years`} />
+                <InfoRow
+                  label={language === 'te' ? 'వయోపరిమితి' : language === 'hi' ? 'आयु सीमा' : language === 'kn' ? 'ವಯಸ್ಸಿನ ಮಿತಿ' : language === 'ta' ? 'வயது வரம்பு' : language === 'ml' ? 'പ്രായപരിധി' : 'Age Limit'}
+                  value={`Up to ${scheme.eligibility.ageLimit.max} years`}
+                />
               )}
             </div>
             {scheme.eligibility.other && (
@@ -215,7 +378,7 @@ function SchemeDetail({
             )}
           </Section>
 
-          <Section title="Benefits">
+          <Section title={benefitsTitle}>
             <div className="space-y-2">
               {scheme.benefits.map((b) => (
                 <div key={b.label} className="bg-[#f0faf9] rounded-xl px-3.5 py-3">
@@ -226,7 +389,7 @@ function SchemeDetail({
             </div>
           </Section>
 
-          <Section title="Documents Required">
+          <Section title={t('mandatory_docs')}>
             <div className="space-y-2">
               {scheme.documents.map((doc) => (
                 <div key={doc.name} className="flex items-start gap-2.5">
@@ -243,7 +406,7 @@ function SchemeDetail({
             <p className="text-[11px] text-gray-400 mt-3">REQ = Required &nbsp;|&nbsp; OPT = Optional</p>
           </Section>
 
-          <Section title="Important Dates">
+          <Section title={t('important_dates')}>
             <div className="space-y-0">
               {scheme.importantDates.map((d, i) => (
                 <div
@@ -261,7 +424,7 @@ function SchemeDetail({
             </div>
           </Section>
 
-          <Section title="Verification Process">
+          <Section title={t('verification_flow')}>
             <ol className="space-y-3">
               {scheme.verificationProcess.map((step, i) => (
                 <li key={i} className="flex items-start gap-3">
@@ -277,7 +440,7 @@ function SchemeDetail({
 
         {payment && (
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Payment History</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('dbt_payment_history')}</p>
             <StatusTimeline payment={payment} />
           </div>
         )}
@@ -287,7 +450,7 @@ function SchemeDetail({
       <div className="fixed bottom-16 left-0 right-0 px-4 py-3 bg-white z-40" style={{ boxShadow: '0 -1px 0 #e5e9ef' }}>
         {!hasApplied ? (
           <button id="scheme-apply-btn" onClick={onApply} className="btn-primary">
-            Apply for {scheme.shortName}
+            {UI_TERMS.apply_now[language] || 'Apply on Portal'} — {localized.shortName}
           </button>
         ) : (
           <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-center">

@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { DocumentCard } from '../components/DocumentCard';
-import type { DocumentType } from '../types';
+import { DocumentModal } from '../components/DocumentModal';
+import type { DocumentType, UserDocument } from '../types';
 
 const CATEGORIES: { label: string; types: DocumentType[]; icon: string }[] = [
   { label: 'Identity', types: ['aadhaar', 'apaar', 'photograph'], icon: '🪪' },
@@ -12,7 +14,8 @@ const CATEGORIES: { label: string; types: DocumentType[]; icon: string }[] = [
 ];
 
 export function DocumentsScreen() {
-  const { documents } = useApp();
+  const { documents, student } = useApp();
+  const [selectedDoc, setSelectedDoc] = useState<UserDocument | null>(null);
 
   const verified = documents.filter((d) => d.status === 'verified').length;
   const pending = documents.filter((d) => d.status === 'pending').length;
@@ -79,7 +82,11 @@ export function DocumentsScreen() {
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{cat.label}</p>
               <div className="space-y-2">
                 {catDocs.map((doc) => (
-                  <DocumentCard key={doc.id} document={doc} />
+                  <DocumentCard
+                    key={doc.id}
+                    document={doc}
+                    onView={(d) => setSelectedDoc(d)}
+                  />
                 ))}
               </div>
             </section>
@@ -88,10 +95,19 @@ export function DocumentsScreen() {
 
         <div className="card-sm px-4 py-3">
           <p className="text-[11px] text-gray-500 leading-relaxed">
-            <span className="font-semibold text-gray-700">Note:</span> Verified documents have been authenticated through DigiLocker, government databases, or competent authority records. Uploaded documents remain pending until reviewed.
+            <span className="font-semibold text-gray-700">Note:</span> Verified documents have been authenticated through DigiLocker, government databases, or competent authority records. Click <strong>View</strong> or <strong>Template</strong> on any document to inspect its official layout and details.
           </p>
         </div>
       </div>
+
+      {/* Document Template Preview Modal */}
+      {selectedDoc && (
+        <DocumentModal
+          document={selectedDoc}
+          student={student}
+          onClose={() => setSelectedDoc(null)}
+        />
+      )}
     </div>
   );
 }

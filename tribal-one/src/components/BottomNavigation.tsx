@@ -1,17 +1,27 @@
-import { Home, BookOpen, FolderOpen, MessageSquare, User } from 'lucide-react';
+import { Home, BookOpen, FolderOpen, MessageSquare, Layers } from 'lucide-react';
 import type { NavTab } from '../types';
 import { useApp } from '../context/AppContext';
+import type { TranslationKey } from '../utils/translations';
 
-const TABS: { id: NavTab; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number; style?: React.CSSProperties; className?: string }> }[] = [
-  { id: 'home', label: 'Home', Icon: Home },
-  { id: 'scholarships', label: 'Schemes', Icon: BookOpen },
-  { id: 'documents', label: 'Documents', Icon: FolderOpen },
-  { id: 'jago', label: 'JAGO AI', Icon: MessageSquare },
-  { id: 'profile', label: 'Profile', Icon: User },
+const TABS: {
+  id: NavTab;
+  labelKey: TranslationKey;
+  Icon: React.ComponentType<{
+    size?: number;
+    strokeWidth?: number;
+    style?: React.CSSProperties;
+    className?: string;
+  }>;
+}[] = [
+  { id: 'home',         labelKey: 'nav_home',         Icon: Home },
+  { id: 'scholarships', labelKey: 'nav_scholarships', Icon: BookOpen },
+  { id: 'programmes',   labelKey: 'nav_programmes',   Icon: Layers },
+  { id: 'documents',    labelKey: 'nav_documents',    Icon: FolderOpen },
+  { id: 'jago',         labelKey: 'nav_jago',         Icon: MessageSquare },
 ];
 
 export function BottomNavigation() {
-  const { activeTab, setActiveTab } = useApp();
+  const { activeTab, setActiveTab, t } = useApp();
 
   return (
     <nav
@@ -23,8 +33,9 @@ export function BottomNavigation() {
       aria-label="Main navigation"
     >
       <div className="flex max-w-lg mx-auto">
-        {TABS.map(({ id, label, Icon }) => {
+        {TABS.map(({ id, labelKey, Icon }) => {
           const active = activeTab === id;
+          const label = t(labelKey);
           return (
             <button
               key={id}
@@ -35,7 +46,7 @@ export function BottomNavigation() {
               className="relative flex-1 flex flex-col items-center justify-center py-2 gap-0.5"
               style={{ minHeight: 56 }}
             >
-              {/* Active indicator dot */}
+              {/* Active indicator bar */}
               {active && (
                 <span
                   className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-[#0F766E]"
@@ -43,12 +54,12 @@ export function BottomNavigation() {
                 />
               )}
               <Icon
-                size={22}
+                size={20}
                 strokeWidth={active ? 2.5 : 1.8}
                 style={{ color: active ? '#0F766E' : '#9ca3af', transition: 'color 0.15s' }}
               />
               <span
-                className="text-[10px] font-semibold leading-none"
+                className="text-[9px] font-semibold leading-none mt-0.5"
                 style={{ color: active ? '#0F766E' : '#9ca3af', transition: 'color 0.15s' }}
               >
                 {label}

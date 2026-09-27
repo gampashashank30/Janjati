@@ -2,6 +2,7 @@ import { AppProvider, useApp } from './context/AppContext';
 import { LoginScreen } from './screens/LoginScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { ScholarshipsScreen } from './screens/ScholarshipsScreen';
+import { ProgrammesScreen } from './screens/ProgrammesScreen';
 import { DocumentsScreen } from './screens/DocumentsScreen';
 import { JagoScreen } from './screens/JagoScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
@@ -23,11 +24,12 @@ function AppRoutes() {
   return (
     <div className="max-w-lg mx-auto relative">
       <main id="main-content">
-        {activeTab === 'home' && <HomeScreen />}
+        {activeTab === 'home'         && <HomeScreen />}
         {activeTab === 'scholarships' && <ScholarshipsScreen />}
-        {activeTab === 'documents' && <DocumentsScreen />}
-        {activeTab === 'jago' && <JagoScreen />}
-        {activeTab === 'profile' && <ProfileScreen />}
+        {activeTab === 'programmes'   && <ProgrammesScreen />}
+        {activeTab === 'documents'    && <DocumentsScreen />}
+        {activeTab === 'jago'         && <JagoScreen />}
+        {activeTab === 'profile'      && <ProfileScreen />}
       </main>
       <BottomNavigation />
     </div>

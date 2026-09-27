@@ -1,9 +1,9 @@
-import { Bell, ChevronRight, AlertCircle, Clock, IndianRupee, FileCheck } from 'lucide-react';
+import { User, ChevronRight, AlertCircle, Clock, IndianRupee, FileCheck } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatCurrency, formatDate, statusLabel, statusBadgeClass } from '../utils/format';
 
 export function HomeScreen() {
-  const { student, applications, payments, notifications, unreadCount, setActiveTab, markNotificationRead } = useApp();
+  const { student, applications, payments, notifications, unreadCount, setActiveTab, markNotificationRead, t } = useApp();
 
   const activeApps = applications.filter((a) => ['submitted', 'under_verification', 'draft'].includes(a.status)).length;
   const approvedApps = applications.filter((a) => ['approved', 'sanctioned'].includes(a.status)).length;
@@ -22,17 +22,22 @@ export function HomeScreen() {
       {/* ── Header ── */}
       <header className="bg-[#0F766E] px-4 pt-14 pb-6">
         <div className="flex items-center justify-between mb-5">
-          <div>
-            <p className="text-white/60 text-[11px] font-medium uppercase tracking-wide">Ministry of Tribal Affairs</p>
-            <h1 className="text-white text-xl font-bold tracking-tight mt-0.5">Tribal One</h1>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-white flex items-center justify-center shrink-0 p-0.5 shadow-sm ring-2 ring-white/30 overflow-hidden">
+              <img src="/logo.jpg" alt="Tribal One Logo" className="w-full h-full object-cover rounded-full" />
+            </div>
+            <div>
+              <p className="text-white/70 text-[11px] font-medium uppercase tracking-wide">{t('mota_title')}</p>
+              <h1 className="text-white text-xl font-bold tracking-tight mt-0.5">{t('app_title')}</h1>
+            </div>
           </div>
           <button
-            id="notifications-btn"
+            id="profile-btn"
             onClick={() => setActiveTab('profile')}
             className="relative w-10 h-10 flex items-center justify-center bg-white/10 rounded-full border border-white/15"
-            aria-label={`Notifications — ${unreadCount} unread`}
+            aria-label="Student Profile"
           >
-            <Bell size={19} className="text-white" />
+            <User size={19} className="text-white" />
             {unreadCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#F59E0B] text-white text-[9px] font-bold flex items-center justify-center">
                 {unreadCount}
@@ -47,11 +52,18 @@ export function HomeScreen() {
           style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }}
         >
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center shrink-0 text-white font-bold text-lg">
-              {student?.name?.charAt(0) ?? 'U'}
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0 overflow-hidden border-2 border-white/40 shadow-xs">
+              <img
+                src="/ramesh_paharia.jpg"
+                alt={student?.name ?? 'Student Photo'}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-white/70 text-xs">Welcome back</p>
+              <p className="text-white/70 text-xs">{t('welcome')}</p>
               <p className="text-white font-semibold text-base leading-snug truncate">{student?.name}</p>
               <p className="text-white/55 text-[11px] mt-0.5">
                 {student?.aparId} · AY {student?.academicYear}
@@ -59,7 +71,7 @@ export function HomeScreen() {
             </div>
             <div className="shrink-0">
               <span className="text-[10px] font-bold px-2 py-1 rounded-md bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30">
-                ST
+                {t('scheduled_tribe')}
               </span>
             </div>
           </div>
@@ -76,7 +88,7 @@ export function HomeScreen() {
               iconBg="#f0faf9"
               iconColor="#0F766E"
               value={String(activeApps)}
-              label="Active Applications"
+              label={t('active_applications')}
               sub="In progress"
             />
             <SummaryCard
@@ -85,7 +97,7 @@ export function HomeScreen() {
               iconBg="#f0fdf4"
               iconColor="#15803d"
               value={String(approvedApps)}
-              label="Scholarships Approved"
+              label={t('approved_schemes')}
               sub="This year"
             />
             <SummaryCard
@@ -94,7 +106,7 @@ export function HomeScreen() {
               iconBg="#f0faf9"
               iconColor="#0F766E"
               value={formatCurrency(totalReceived)}
-              label="Amount Received"
+              label={t('total_received_dbt')}
               sub="Via DBT / PFMS"
             />
             <SummaryCard
@@ -103,7 +115,7 @@ export function HomeScreen() {
               iconBg="#fffbeb"
               iconColor="#d97706"
               value={String(pendingVerif)}
-              label="Pending Verification"
+              label={t('under_verification')}
               sub="Awaiting review"
             />
           </div>
@@ -190,7 +202,7 @@ export function HomeScreen() {
         {/* ── Upcoming Deadlines ── */}
         <section aria-label="Upcoming deadlines">
           <div className="section-header">
-            <span className="section-title">Upcoming Deadlines</span>
+            <span className="section-title">{t('upcoming_deadlines')}</span>
           </div>
           <div className="space-y-2.5">
             {upcomingDeadlines.map((dl) => (
@@ -211,12 +223,59 @@ export function HomeScreen() {
           </div>
         </section>
 
+        {/* ── Other MoTA Programmes ── */}
+        <section aria-label="Other programmes">
+          <div className="section-header">
+            <span className="section-title">Other MoTA Programmes</span>
+            <button
+              id="view-programmes-btn"
+              onClick={() => setActiveTab('programmes')}
+              className="section-link flex items-center gap-0.5"
+            >
+              {t('view_all')} <ChevronRight size={13} />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            {[
+              { id: 'emrs',     label: 'EMRS',           sub: 'School & Education', color: '#1d4ed8', bg: '#eff6ff' },
+              { id: 'asry',     label: 'ASRY',           sub: 'Education Loan',     color: '#b45309', bg: '#fffbeb' },
+              { id: 'goal',     label: 'GOAL',           sub: 'Skill Development',  color: '#0d6560', bg: '#f0faf9' },
+              { id: 'pm_janman',label: 'PM-JANMAN',      sub: 'PVTG Welfare',       color: '#15803d', bg: '#f0fdf4' },
+              { id: 'da_jgua',  label: 'DA-JGUA',        sub: 'Tribal Development', color: '#9a3412', bg: '#fff7ed' },
+              { id: 'vcf_st',   label: 'VCF-ST',         sub: 'Entrepreneurship',   color: '#7c3aed', bg: '#f5f3ff' },
+            ].map((prog) => (
+              <button
+                key={prog.id}
+                id={`home-prog-${prog.id}`}
+                onClick={() => setActiveTab('programmes')}
+                className="card p-3.5 text-left flex items-start gap-2.5 active:scale-95 transition-transform"
+                aria-label={`View ${prog.label} programme`}
+              >
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: prog.bg }}
+                  aria-hidden
+                >
+                  <span className="text-[10px] font-black" style={{ color: prog.color }}>
+                    {prog.label.slice(0, 2)}
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-gray-900 leading-snug">{prog.label}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{prog.sub}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+
         {/* ── Recent Notifications ── */}
         <section aria-label="Recent notifications" className="mb-4">
           <div className="section-header">
-            <span className="section-title">Notifications</span>
+            <span className="section-title">{t('notifications')}</span>
             {unreadCount > 0 && (
-              <span className="text-xs font-semibold text-[#0F766E]">{unreadCount} unread</span>
+              <span className="text-xs font-semibold text-[#0F766E]">{unreadCount} {t('unread')}</span>
             )}
           </div>
           <div className="card overflow-hidden">
