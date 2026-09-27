@@ -68,7 +68,7 @@ export function AdminScreen() {
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} />
                 <YAxis tick={{ fontSize: 10, fill: '#64748b' }} />
                 <Tooltip
-                  formatter={(v: number) => [v.toLocaleString('en-IN'), '']}
+                  formatter={(v: any) => [Number(v ?? 0).toLocaleString('en-IN'), '']}
                   contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}
                 />
                 <Bar dataKey="applications" name="Applications" fill="#0F766E" radius={[3, 3, 0, 0]} />
@@ -124,7 +124,7 @@ export function AdminScreen() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(v: number) => [v.toLocaleString('en-IN'), '']}
+                  formatter={(v: any) => [Number(v ?? 0).toLocaleString('en-IN'), '']}
                   contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}
                 />
                 <Legend

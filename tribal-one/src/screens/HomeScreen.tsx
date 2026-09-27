@@ -1,4 +1,4 @@
-import { Bell, ChevronRight, AlertCircle, Clock, IndianRupee, FileCheck, TrendingUp } from 'lucide-react';
+import { Bell, ChevronRight, AlertCircle, Clock, IndianRupee, FileCheck } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatCurrency, formatDate, statusLabel, statusBadgeClass } from '../utils/format';
 

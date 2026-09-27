@@ -1,6 +1,6 @@
 import { CheckCircle2, Clock, XCircle, Upload, Eye, AlertCircle } from 'lucide-react';
 import type { UserDocument } from '../types';
-import { docStatusLabel, formatDate } from '../utils/format';
+import { formatDate } from '../utils/format';
 import { useApp } from '../context/AppContext';
 
 const DOC_SHORT: Record<string, string> = {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ChevronDown, ChevronUp, ChevronRight, ExternalLink, BookOpen, GraduationCap, Globe, Award, Landmark } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, ExternalLink, BookOpen, GraduationCap, Globe, Award, Landmark } from 'lucide-react';
 import { SCHOLARSHIPS } from '../data/scholarships';
 import { ScholarshipCard } from '../components/ScholarshipCard';
 import { StatusTimeline } from '../components/StatusTimeline';

@@ -2,7 +2,7 @@ import { Home, BookOpen, FolderOpen, MessageSquare, User } from 'lucide-react';
 import type { NavTab } from '../types';
 import { useApp } from '../context/AppContext';
 
-const TABS: { id: NavTab; label: string; Icon: React.FC<{ size?: number; strokeWidth?: number }> }[] = [
+const TABS: { id: NavTab; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number; style?: React.CSSProperties; className?: string }> }[] = [
   { id: 'home', label: 'Home', Icon: Home },
   { id: 'scholarships', label: 'Schemes', Icon: BookOpen },
   { id: 'documents', label: 'Documents', Icon: FolderOpen },

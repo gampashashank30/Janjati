@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronRight, LogOut, Shield, FileText, HelpCircle, ChevronDown, ChevronUp, Phone } from 'lucide-react';
+import { ChevronRight, LogOut, Shield, FileText, ChevronDown, ChevronUp, Phone } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { NotificationItem } from '../components/NotificationItem';
 import { StatusTimeline } from '../components/StatusTimeline';
