@@ -24,6 +24,8 @@ interface AppContextType {
   scholarshipFilter: string | null;
   /** Deep-link programme ID for ProgrammesScreen */
   selectedProgrammeId: string | null;
+  /** Deep-link section for ProfileScreen (e.g. 'notifications') */
+  profileSection: string | null;
   login: (method: string, credential: string) => Promise<void>;
   logout: () => void;
   setActiveTab: (tab: NavTab) => void;
@@ -31,6 +33,9 @@ interface AppContextType {
   navigateToScholarships: (filter: string | null) => void;
   /** Navigate to Programmes tab with optional specific programme pre-selected */
   navigateToProgramme: (programmeId: string | null) => void;
+  /** Navigate to Profile tab and open a specific section (e.g. 'notifications') */
+  navigateToNotifications: () => void;
+  clearProfileSection: () => void;
   setLanguage: (lang: Language) => void;
   t: (key: TranslationKey) => string;
   markNotificationRead: (id: string) => void;
@@ -220,6 +225,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [activeTab, setActiveTab] = useState<NavTab>('home');
   const [scholarshipFilter, setScholarshipFilter] = useState<string | null>(null);
   const [selectedProgrammeId, setSelectedProgrammeId] = useState<string | null>(null);
+  const [profileSection, setProfileSection] = useState<string | null>(null);
   const [language, setLanguageState] = useState<Language>(() => {
     try {
       const saved = localStorage.getItem('tribal_one_lang') as Language | null;
@@ -284,6 +290,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSelectedProgrammeId(null);
   }, []);
 
+  const navigateToNotifications = useCallback(() => {
+    setProfileSection('notifications');
+    setActiveTab('profile');
+  }, []);
+
+  const clearProfileSection = useCallback(() => {
+    setProfileSection(null);
+  }, []);
+
   const markNotificationRead = useCallback((id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
@@ -342,6 +357,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         language,
         scholarshipFilter,
         selectedProgrammeId,
+        profileSection,
         unreadCount,
         login,
         logout,
@@ -350,6 +366,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         clearScholarshipFilter,
         navigateToProgramme,
         clearSelectedProgramme,
+        navigateToNotifications,
+        clearProfileSection,
         setLanguage,
         t,
         markNotificationRead,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronRight, LogOut, Shield, FileText, ChevronDown, ChevronUp, Phone, Globe, Check } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { NotificationItem } from '../components/NotificationItem';
@@ -10,8 +10,16 @@ import { SUPPORTED_LANGUAGES } from '../utils/translations';
 type Section = 'main' | 'notifications' | 'payments' | 'eligibility' | 'privacy' | 'terms' | 'language';
 
 export function ProfileScreen() {
-  const { student, notifications, payments, logout, markAllRead, unreadCount, language, setLanguage, t } = useApp();
+  const { student, notifications, payments, logout, markAllRead, unreadCount, language, setLanguage, t, profileSection, clearProfileSection } = useApp();
   const [section, setSection] = useState<Section>('main');
+
+  // Deep-link: auto-navigate to section requested from elsewhere in the app
+  useEffect(() => {
+    if (profileSection && profileSection !== section) {
+      setSection(profileSection as Section);
+      clearProfileSection();
+    }
+  }, [profileSection, clearProfileSection]);
 
   if (section === 'language') {
     return (

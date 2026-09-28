@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { formatCurrency, formatDate, statusLabel, statusBadgeClass } from '../utils/format';
 
 export function HomeScreen() {
-  const { student, applications, payments, notifications, unreadCount, setActiveTab, navigateToScholarships, navigateToProgramme, markNotificationRead, t } = useApp();
+  const { student, applications, payments, notifications, unreadCount, setActiveTab, navigateToScholarships, navigateToProgramme, navigateToNotifications, markNotificationRead, t } = useApp();
 
   const activeApps = applications.filter((a) => ['submitted', 'under_verification', 'draft'].includes(a.status)).length;
   const approvedApps = applications.filter((a) => ['approved', 'sanctioned'].includes(a.status)).length;
@@ -278,33 +278,80 @@ export function HomeScreen() {
         <section aria-label="Recent notifications" className="mb-4">
           <div className="section-header">
             <span className="section-title">{t('notifications')}</span>
-            {unreadCount > 0 && (
-              <span className="text-xs font-semibold text-[#0F766E]">{unreadCount} {t('unread')}</span>
-            )}
+            <button
+              onClick={navigateToNotifications}
+              className="text-xs font-semibold text-[#0F766E] hover:underline flex items-center gap-1"
+            >
+              {unreadCount > 0 ? `${unreadCount} unread` : 'View all'}
+              <ChevronRight size={13} />
+            </button>
           </div>
           <div className="card overflow-hidden">
-            {recentNotifs.map((notif, i) => (
-              <button
-                key={notif.id}
-                id={`notif-home-${notif.id}`}
-                onClick={() => markNotificationRead(notif.id)}
-                className="w-full text-left px-4 py-3.5 flex items-start gap-3 hover:bg-gray-50 transition-colors"
-                style={{
-                  borderBottom: i < recentNotifs.length - 1 ? '1px solid #f1f5f9' : 'none',
-                  background: !notif.read ? '#f0faf9' : '#fff',
-                }}
-                aria-label={notif.title}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    {!notif.read && <span className="w-2 h-2 rounded-full bg-[#0F766E] shrink-0" aria-label="Unread" />}
-                    <p className="text-sm font-semibold text-gray-900 leading-snug truncate">{notif.title}</p>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{notif.message}</p>
-                </div>
-                <ChevronRight size={15} className="text-gray-300 shrink-0 mt-0.5" aria-hidden />
-              </button>
-            ))}
+            {recentNotifs.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-6">{t('no_notifications')}</p>
+            ) : (
+              recentNotifs.map((notif, i) => {
+                // Smart redirect destination
+                function handleNotifClick() {
+                  markNotificationRead(notif.id);
+                  if (notif.type === 'document_deficiency') {
+                    setActiveTab('documents');
+                  } else if (
+                    notif.type === 'verification_complete' ||
+                    notif.type === 'sanctioned' ||
+                    notif.type === 'dbt_credited' ||
+                    notif.type === 'renewal' ||
+                    (notif.type === 'info' && notif.schemeId)
+                  ) {
+                    navigateToScholarships('my_applications');
+                  } else {
+                    navigateToNotifications();
+                  }
+                }
+
+                const destLabel =
+                  notif.type === 'document_deficiency'    ? '→ Documents' :
+                  notif.type === 'dbt_credited'           ? '→ Payment' :
+                  notif.type === 'sanctioned'             ? '→ Application' :
+                  notif.type === 'verification_complete'  ? '→ Track' :
+                  notif.type === 'renewal'                ? '→ Apply' :
+                  notif.schemeId                          ? '→ Application' :
+                                                            '→ All Notifications';
+
+                return (
+                  <button
+                    key={notif.id}
+                    id={`notif-home-${notif.id}`}
+                    onClick={handleNotifClick}
+                    className="w-full text-left px-4 py-3.5 flex items-start gap-3 hover:bg-gray-50 transition-colors group"
+                    style={{
+                      borderBottom: i < recentNotifs.length - 1 ? '1px solid #f1f5f9' : 'none',
+                      background: !notif.read ? '#f0faf9' : '#fff',
+                    }}
+                    aria-label={notif.title}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        {!notif.read && <span className="w-2 h-2 rounded-full bg-[#0F766E] shrink-0" aria-label="Unread" />}
+                        <p className="text-sm font-semibold text-gray-900 leading-snug truncate">{notif.title}</p>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{notif.message}</p>
+                      <p className="text-[10px] text-[#0F766E] font-semibold mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {destLabel}
+                      </p>
+                    </div>
+                    <ChevronRight size={15} className="text-gray-300 shrink-0 mt-0.5 group-hover:text-[#0F766E] transition-colors" aria-hidden />
+                  </button>
+                );
+              })
+            )}
+            {/* View all footer */}
+            <button
+              onClick={navigateToNotifications}
+              className="w-full text-center text-xs font-semibold text-[#0F766E] py-3 border-t border-gray-100 hover:bg-teal-50 transition-colors"
+            >
+              View all notifications
+            </button>
           </div>
         </section>
       </div>
