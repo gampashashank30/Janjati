@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { DocumentCard } from '../components/DocumentCard';
 import { DocumentModal } from '../components/DocumentModal';
 import type { DocumentType, UserDocument } from '../types';
+import { formatDate } from '../utils/format';
 
 const CATEGORIES: { label: string; types: DocumentType[]; icon: string }[] = [
   { label: 'Identity', types: ['aadhaar', 'apaar', 'photograph'], icon: '🪪' },
@@ -22,6 +24,17 @@ export function DocumentsScreen() {
   const missing = documents.filter((d) => d.status === 'not_uploaded').length;
   const total = documents.length;
   const pct = Math.round((verified / total) * 100);
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  const expiringDocs = documents.filter((d) => {
+    if (!d.expiryDate || d.status === 'not_uploaded') return false;
+    const exp = new Date(d.expiryDate);
+    exp.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((exp.getTime() - now.getTime()) / 86_400_000);
+    return diff <= 45;
+  });
 
   return (
     <div className="pb-20 bg-[#f5f7fa]">
@@ -71,6 +84,42 @@ export function DocumentsScreen() {
           </div>
         </div>
       </div>
+
+      {/* ── Document Expiry Alert Banner ── */}
+      {expiringDocs.length > 0 && (
+        <div className="px-4 mt-3">
+          <div className="rounded-2xl bg-[#fff1f2] border-2 border-red-500 p-4 shadow-sm flex items-start gap-3 ring-2 ring-red-400/30">
+            <div className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center shrink-0 shadow-xs animate-pulse">
+              <AlertTriangle size={20} className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-white bg-red-600 px-2 py-0.5 rounded-full shadow-2xs">
+                  Expiry Warning
+                </span>
+                <span className="text-xs font-bold text-red-800">Action Required</span>
+              </div>
+              {expiringDocs.map((doc) => {
+                const exp = new Date(doc.expiryDate!);
+                exp.setHours(0, 0, 0, 0);
+                const diff = Math.ceil((exp.getTime() - now.getTime()) / 86_400_000);
+                return (
+                  <p key={doc.id} className="text-xs font-bold text-red-950 mt-1.5 leading-snug">
+                    <span className="underline decoration-red-500 font-extrabold">{doc.name}</span> will expire in{' '}
+                    <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-[11px] font-black tracking-wide">
+                      {diff} days
+                    </span>{' '}
+                    (Valid till {formatDate(doc.expiryDate!)}).
+                  </p>
+                );
+              })}
+              <p className="text-[11px] text-red-700 mt-1.5 leading-relaxed">
+                Renew via local Tehsildar / MeeSeva to avoid disruption in scholarship verifications and DBT disbursements.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Document categories */}
       <div className="px-4 mt-4 space-y-4 mb-4">

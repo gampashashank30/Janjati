@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ArrowLeft, ExternalLink, ChevronRight,
   BookOpen, Users, AlertTriangle, Info, BadgeCheck,
@@ -86,17 +86,27 @@ const ROUTE_LABELS: Record<Programme['applicationRoute'], { label: Record<string
 type View = 'list' | 'detail';
 
 export function ProgrammesScreen() {
-  const { language, t } = useApp();
+  const { language, t, selectedProgrammeId, clearSelectedProgramme } = useApp();
   const [view, setView]           = useState<View>('list');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<ProgrammeCategory | 'All'>('All');
 
+  // React to deep-link from HomeScreen
+  useEffect(() => {
+    if (selectedProgrammeId) {
+      setSelectedId(selectedProgrammeId);
+      setView('detail');
+      clearSelectedProgramme();
+    }
+  }, [selectedProgrammeId, clearSelectedProgramme]);
+
   const selectedProgramme = PROGRAMMES.find((p) => p.id === selectedId);
 
   function handleView(id: string) { setSelectedId(id); setView('detail'); }
+  function handleBack() { setView('list'); setSelectedId(null); }
 
   if (view === 'detail' && selectedProgramme) {
-    return <ProgrammeDetail programme={selectedProgramme} onBack={() => setView('list')} />;
+    return <ProgrammeDetail programme={selectedProgramme} onBack={handleBack} />;
   }
 
   const displayed = activeCategory === 'All'
@@ -194,7 +204,11 @@ function ProgrammeCard({ programme: p, onView }: { programme: Programme; onView:
   const catLabel = PROGRAMME_CATEGORY_LABELS[p.category]?.[language] || p.category;
 
   return (
-    <article className="card overflow-hidden" aria-label={localized.name}>
+    <article
+      onClick={() => onView(p.id)}
+      className="card overflow-hidden cursor-pointer hover:shadow-md active:scale-[0.99] transition-all"
+      aria-label={localized.name}
+    >
       {/* Top accent bar */}
       <div className="h-1" style={{ background: p.tagColor }} aria-hidden />
 
@@ -251,8 +265,11 @@ function ProgrammeCard({ programme: p, onView }: { programme: Programme; onView:
         {/* Action */}
         <button
           id={`view-prog-${p.id}`}
-          onClick={() => onView(p.id)}
-          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            onView(p.id);
+          }}
+          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border transition-colors hover:bg-black/5"
           style={{ color: p.tagColor, borderColor: p.tagColor }}
           aria-label={`View details of ${localized.name}`}
         >
@@ -348,7 +365,7 @@ function ProgrammeDetail({ programme: p, onBack }: { programme: Programme; onBac
         {/* Overview */}
         <div className="card px-4 py-4">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
-            {UI_TERMS.overview[language] || 'Overview'}
+            {UI_TERMS.overview?.[language] || 'Overview'}
           </p>
           <p className="text-sm text-gray-700 leading-relaxed">{localized.overview}</p>
           {p.target && (
@@ -366,7 +383,7 @@ function ProgrammeDetail({ programme: p, onBack }: { programme: Programme; onBac
           <div className="card overflow-hidden">
             <div className="px-4 pt-4 pb-3">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-                {UI_TERMS.key_facts[language] || 'Key Facts'}
+                {UI_TERMS.key_facts?.[language] || 'Key Facts'}
               </p>
             </div>
             {p.keyFacts.map((kf, i) => (
@@ -386,7 +403,7 @@ function ProgrammeDetail({ programme: p, onBack }: { programme: Programme; onBac
         {p.whatItProvides.length > 0 && (
           <div className="card px-4 py-4">
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">
-              {UI_TERMS.what_it_provides[language] || 'What This Programme Provides'}
+              {UI_TERMS.what_it_provides?.[language] || 'What This Programme Provides'}
             </p>
             <ul className="space-y-2.5">
               {p.whatItProvides.map((item, i) => (
@@ -402,7 +419,7 @@ function ProgrammeDetail({ programme: p, onBack }: { programme: Programme; onBac
         {/* How to access */}
         <div className="card px-4 py-4">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
-            {UI_TERMS.how_to_access[language] || 'How to Access / Apply'}
+            {UI_TERMS.how_to_access?.[language] || 'How to Access / Apply'}
           </p>
           <p className="text-sm text-gray-700 leading-relaxed">{p.howToAccess}</p>
 
@@ -421,7 +438,7 @@ function ProgrammeDetail({ programme: p, onBack }: { programme: Programme; onBac
         {/* Official Links */}
         <div className="card px-4 py-4">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">
-            {UI_TERMS.official_links[language] || 'Official Links'}
+            {UI_TERMS.official_links?.[language] || 'Official Links'}
           </p>
           <div className="space-y-2.5">
             <a
@@ -479,6 +496,36 @@ function ProgrammeDetail({ programme: p, onBack }: { programme: Programme; onBac
             Ministry of Tribal Affairs (tribal.nic.in), PIB (pib.gov.in). Last verified September 2026.
             Verify all details against the latest official notification before applying.
           </p>
+        </div>
+      </div>
+
+      {/* Sticky Bottom Action Bar */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-4 py-3 shadow-lg"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)' }}
+      >
+        <div className="max-w-lg mx-auto flex items-center gap-2.5">
+          <button
+            onClick={onBack}
+            className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-xs font-bold hover:bg-gray-50 shrink-0 flex items-center gap-1"
+          >
+            <ArrowLeft size={14} /> {t('back')}
+          </button>
+          <a
+            href={p.portalUrl || p.officialUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            id={`btn-visit-portal-${p.id}`}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold text-white shadow-sm transition-all active:scale-[0.98]"
+            style={{ background: p.tagColor }}
+          >
+            <span>
+              {p.applicationRoute === 'individual_apply'
+                ? (language === 'te' ? 'ఆన్‌లైన్ పోర్టల్‌ను సందర్శించండి' : language === 'hi' ? 'ऑनलाइन पोर्टल पर जाएं' : 'Apply / Visit Portal')
+                : (language === 'te' ? 'అధికారిక పోర్టల్' : language === 'hi' ? 'आधिकारिक पोर्टल' : 'Visit Official Portal')}
+            </span>
+            <ExternalLink size={14} />
+          </a>
         </div>
       </div>
     </div>

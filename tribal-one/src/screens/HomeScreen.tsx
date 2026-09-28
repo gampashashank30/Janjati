@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { formatCurrency, formatDate, statusLabel, statusBadgeClass } from '../utils/format';
 
 export function HomeScreen() {
-  const { student, applications, payments, notifications, unreadCount, setActiveTab, markNotificationRead, t } = useApp();
+  const { student, applications, payments, notifications, unreadCount, setActiveTab, navigateToScholarships, navigateToProgramme, markNotificationRead, t } = useApp();
 
   const activeApps = applications.filter((a) => ['submitted', 'under_verification', 'draft'].includes(a.status)).length;
   const approvedApps = applications.filter((a) => ['approved', 'sanctioned'].includes(a.status)).length;
@@ -90,6 +90,7 @@ export function HomeScreen() {
               value={String(activeApps)}
               label={t('active_applications')}
               sub="In progress"
+              onClick={() => navigateToScholarships('my_applications')}
             />
             <SummaryCard
               id="card-approved"
@@ -99,6 +100,7 @@ export function HomeScreen() {
               value={String(approvedApps)}
               label={t('approved_schemes')}
               sub="This year"
+              onClick={() => navigateToScholarships('approved')}
             />
             <SummaryCard
               id="card-received"
@@ -108,6 +110,7 @@ export function HomeScreen() {
               value={formatCurrency(totalReceived)}
               label={t('total_received_dbt')}
               sub="Via DBT / PFMS"
+              onClick={() => setActiveTab('profile')}
             />
             <SummaryCard
               id="card-pending"
@@ -117,6 +120,7 @@ export function HomeScreen() {
               value={String(pendingVerif)}
               label={t('under_verification')}
               sub="Awaiting review"
+              onClick={() => navigateToScholarships('under_verification')}
             />
           </div>
         </section>
@@ -229,7 +233,7 @@ export function HomeScreen() {
             <span className="section-title">Other MoTA Programmes</span>
             <button
               id="view-programmes-btn"
-              onClick={() => setActiveTab('programmes')}
+              onClick={() => navigateToProgramme(null)}
               className="section-link flex items-center gap-0.5"
             >
               {t('view_all')} <ChevronRight size={13} />
@@ -247,8 +251,8 @@ export function HomeScreen() {
               <button
                 key={prog.id}
                 id={`home-prog-${prog.id}`}
-                onClick={() => setActiveTab('programmes')}
-                className="card p-3.5 text-left flex items-start gap-2.5 active:scale-95 transition-transform"
+                onClick={() => navigateToProgramme(prog.id)}
+                className="card p-3.5 text-left flex items-start gap-2.5 active:scale-95 transition-transform hover:shadow-md cursor-pointer"
                 aria-label={`View ${prog.label} programme`}
               >
                 <div
@@ -309,7 +313,7 @@ export function HomeScreen() {
 }
 
 function SummaryCard({
-  id, Icon, iconBg, iconColor, value, label, sub,
+  id, Icon, iconBg, iconColor, value, label, sub, onClick,
 }: {
   id: string;
   Icon: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }>;
@@ -318,9 +322,15 @@ function SummaryCard({
   value: string;
   label: string;
   sub: string;
+  onClick: () => void;
 }) {
   return (
-    <div id={id} className="card p-4">
+    <button
+      id={id}
+      onClick={onClick}
+      className="card p-4 text-left w-full active:scale-95 transition-transform"
+      aria-label={label}
+    >
       <div
         className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
         style={{ background: iconBg }}
@@ -330,7 +340,10 @@ function SummaryCard({
       </div>
       <p className="text-xl font-bold text-gray-900 leading-none tracking-tight">{value}</p>
       <p className="text-xs font-semibold text-gray-700 mt-1.5 leading-snug">{label}</p>
-      <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>
-    </div>
+      <div className="flex items-center justify-between mt-0.5">
+        <p className="text-[11px] text-gray-400">{sub}</p>
+        <ChevronRight size={12} className="text-gray-300" aria-hidden />
+      </div>
+    </button>
   );
 }

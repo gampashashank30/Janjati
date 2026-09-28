@@ -12,6 +12,21 @@ export type DocumentStatus = 'verified' | 'pending' | 'expired' | 'not_uploaded'
 
 export type PaymentStatus = 'pending' | 'processed' | 'credited' | 'failed';
 
+/**
+ * Machine-readable deadline for a scheme.
+ * - annualDeadline: scheme reopens every year on the same month+day.
+ * - fixedDeadline: one-time fixed ISO date (YYYY-MM-DD).
+ * Both can coexist (e.g. annual with an exception override year).
+ */
+export interface DeadlineConfig {
+  /** Recurring: month (1–12) and day of the application close date */
+  annualDeadline?: { month: number; day: number };
+  /** One-time fixed deadline ISO string YYYY-MM-DD */
+  fixedDeadline?: string;
+  /** Human label for display in ImportantDates table */
+  label: string;
+}
+
 export interface ScholarshipScheme {
   id: string;
   name: string;
@@ -27,6 +42,8 @@ export interface ScholarshipScheme {
   applicationUrl: string;
   portalName: string;
   schemeCode: string;
+  /** Machine-readable deadline — drives the dynamic Missed Opportunities engine */
+  deadlineConfig?: DeadlineConfig;
 }
 
 export interface EligibilityCriteria {
@@ -77,6 +94,24 @@ export interface Student {
   bankName: string;
 }
 
+export type RejectionStage =
+  | 'institute'
+  | 'district'
+  | 'state'
+  | 'ministry';
+
+export interface RejectionDetail {
+  stage: RejectionStage;              // At which level it was rejected
+  rejectedBy: string;                 // Human-readable authority name
+  rejectedOn: string;                 // Date string
+  reasonCode: string;                 // Short code, e.g. 'DOC_EXPIRED'
+  reasonTitle: string;                // e.g. 'Income Certificate Expired'
+  reasonDescription: string;          // Full explanation
+  faultDocument?: string;             // Which specific document caused the rejection
+  canReapply: boolean;
+  nextSteps: string[];                // Ordered action items for the student
+}
+
 export interface Application {
   id: string;
   schemeId: string;
@@ -88,6 +123,7 @@ export interface Application {
   amountSanctioned?: number;
   applicationNumber?: string;
   remarks?: string;
+  rejectionDetail?: RejectionDetail;  // Only present when status === 'rejected'
 }
 
 export interface PaymentRecord {

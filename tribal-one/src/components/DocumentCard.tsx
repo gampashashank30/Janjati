@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, XCircle, Upload, Eye, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle, Upload, Eye, AlertCircle, AlertTriangle } from 'lucide-react';
 import type { UserDocument } from '../types';
 import { formatDate } from '../utils/format';
 import { useApp } from '../context/AppContext';
@@ -80,16 +80,84 @@ export function DocumentCard({
   const { uploadDocument } = useApp();
   const cfg = STATUS_CFG[doc.status];
 
+  // ── Expiry computation ──────────────────────────────────────────────────────
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  let expiryBadge: {
+    label: string;
+    isUrgent: boolean;
+    isExpired: boolean;
+    days: number;
+    formattedDate: string;
+  } | null = null;
+
+  if (doc.expiryDate) {
+    const expiry = new Date(doc.expiryDate);
+    expiry.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((expiry.getTime() - now.getTime()) / 86_400_000);
+    const formattedDate = formatDate(doc.expiryDate);
+
+    if (diffDays < 0) {
+      expiryBadge = {
+        label: `Expired ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''} ago`,
+        isUrgent: true,
+        isExpired: true,
+        days: diffDays,
+        formattedDate,
+      };
+    } else if (diffDays === 0) {
+      expiryBadge = {
+        label: 'Expires TODAY ⚠',
+        isUrgent: true,
+        isExpired: false,
+        days: 0,
+        formattedDate,
+      };
+    } else if (diffDays <= 45) { // 35 days highlights here!
+      expiryBadge = {
+        label: `Expires in ${diffDays} days ⚠️`,
+        isUrgent: true,
+        isExpired: false,
+        days: diffDays,
+        formattedDate,
+      };
+    } else if (diffDays <= 90) {
+      expiryBadge = {
+        label: `Expires in ${diffDays} days`,
+        isUrgent: false,
+        isExpired: false,
+        days: diffDays,
+        formattedDate,
+      };
+    } else {
+      expiryBadge = {
+        label: `Valid till ${formattedDate}`,
+        isUrgent: false,
+        isExpired: false,
+        days: diffDays,
+        formattedDate,
+      };
+    }
+  }
+
+  const isUrgentExpiry = expiryBadge?.isUrgent;
+
   return (
     <div
-      className="rounded-xl p-3.5 flex items-center gap-3 transition-shadow hover:shadow-xs"
-      style={{ background: '#fff', border: `1px solid ${cfg.border}` }}
+      className={`rounded-xl p-3.5 flex items-center gap-3 transition-all ${
+        isUrgentExpiry
+          ? 'bg-[#fff5f5] ring-2 ring-red-500 shadow-sm border-2 border-red-500'
+          : 'bg-white hover:shadow-xs border border-gray-200'
+      }`}
       role="article"
       aria-label={doc.name}
     >
       {/* Doc type thumbnail with realistic generated document image */}
       <div
-        className="w-12 h-14 rounded-lg flex flex-col items-center justify-center shrink-0 cursor-pointer overflow-hidden border border-gray-200 shadow-2xs relative group bg-gray-50"
+        className={`w-12 h-14 rounded-lg flex flex-col items-center justify-center shrink-0 cursor-pointer overflow-hidden shadow-2xs relative group bg-gray-50 border ${
+          isUrgentExpiry ? 'border-red-300' : 'border-gray-200'
+        }`}
         onClick={() => onView?.(doc)}
         title={`Click to view ${doc.name}`}
       >
@@ -109,7 +177,9 @@ export function DocumentCard({
 
       {/* Info */}
       <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onView?.(doc)}>
-        <p className="text-sm font-semibold text-gray-900 leading-snug truncate hover:text-[#0F766E] transition-colors">{doc.name}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-bold text-gray-900 leading-snug truncate hover:text-[#0F766E] transition-colors">{doc.name}</p>
+        </div>
         <div className="flex items-center gap-1.5 mt-1">
           <cfg.Icon size={12} style={{ color: cfg.iconColor, flexShrink: 0 }} />
           <span className="text-xs font-semibold" style={{ color: cfg.labelColor }}>{cfg.label}</span>
@@ -117,8 +187,20 @@ export function DocumentCard({
         {doc.uploadDate && (
           <p className="text-[11px] text-gray-400 mt-0.5">Uploaded {formatDate(doc.uploadDate)}</p>
         )}
-        {doc.expiryDate && (
-          <p className="text-[11px] text-gray-400">Valid till {formatDate(doc.expiryDate)}</p>
+        {expiryBadge && (
+          isUrgentExpiry ? (
+            <div className="mt-1.5">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-extrabold tracking-wide shadow-xs animate-pulse">
+                <AlertTriangle size={11} className="text-white shrink-0" />
+                {expiryBadge.label}
+              </span>
+              <p className="text-[11px] font-bold text-red-600 mt-0.5">
+                Valid till {expiryBadge.formattedDate} · Needs renewal
+              </p>
+            </div>
+          ) : (
+            <p className="text-[11px] text-gray-400">Valid till {expiryBadge.formattedDate}</p>
+          )
         )}
         {doc.verifiedBy && (
           <p className="text-[10px] text-gray-400 mt-0.5 truncate">by {doc.verifiedBy}</p>

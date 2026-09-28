@@ -66,6 +66,10 @@ export const SCHOLARSHIPS: ScholarshipScheme[] = [
       { event: 'Institute Verification Deadline',     date: '30 November (each year)' },
       { event: 'District / State Verification',       date: '31 December (each year)' },
     ],
+    deadlineConfig: {
+      annualDeadline: { month: 10, day: 31 }, // 31 October every year
+      label: 'Last Date — Fresh Applications',
+    },
     verificationProcess: [
       'Student submits application on NSP (scholarships.gov.in)',
       'School/Institute verifies enrolment and uploaded documents',
@@ -254,6 +258,10 @@ export const SCHOLARSHIPS: ScholarshipScheme[] = [
       { event: 'Last Date for Applications',              date: 'As per latest notification on fellowship portal' },
       { event: 'Fellowship Commencement',                 date: 'Subject to UGC / MoTA processing schedule' },
     ],
+    deadlineConfig: {
+      annualDeadline: { month: 12, day: 15 }, // Approx 15 December each year
+      label: 'Last Date — Fellowship Applications',
+    },
     verificationProcess: [
       'MoTA releases notification and opens applications on fellowship.tribal.gov.in',
       'Student applies through the National Fellowship Portal',
@@ -321,6 +329,11 @@ export const SCHOLARSHIPS: ScholarshipScheme[] = [
       { event: 'Document Verification & Selection',  date: 'August 2026 (expected)' },
       { event: 'Award Letters Issued',               date: 'September 2026 (expected)' },
     ],
+    deadlineConfig: {
+      fixedDeadline: '2026-07-31',      // Extended deadline for 2026-27 cycle
+      annualDeadline: { month: 3, day: 31 }, // Typically end of March each year
+      label: 'Last Date — Overseas Scholarship Applications',
+    },
     verificationProcess: [
       'Ministry of Tribal Affairs releases official notification on overseas.tribal.gov.in',
       'Student applies on the NOS portal (overseas.tribal.gov.in)',
@@ -842,6 +855,10 @@ export const SCHOLARSHIPS: ScholarshipScheme[] = [
       'Formal Fellowship Award Letter issued by Ministry of Tribal Affairs',
       'Monthly fellowship disbursed directly via DBT PFMS into researcher bank account',
     ],
+    deadlineConfig: {
+      annualDeadline: { month: 7, day: 31 }, // 31 July each year
+      label: 'Research Proposal Deadline',
+    },
   },
 ];
 

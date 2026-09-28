@@ -10,6 +10,7 @@ import {
   ZoomIn,
   Eye,
   CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 import type { UserDocument, Student } from '../types';
 import { formatDate } from '../utils/format';
@@ -316,9 +317,30 @@ export function DocumentModal({ document: doc, student, onClose }: DocumentModal
                     </div>
                     <div>
                       <span className="text-gray-400 block text-[10px]">Validity Period</span>
-                      <span className="font-medium text-gray-900">
-                        {doc.expiryDate ? formatDate(doc.expiryDate) : 'Permanent / Valid'}
-                      </span>
+                      {doc.expiryDate ? (() => {
+                        const now = new Date();
+                        now.setHours(0, 0, 0, 0);
+                        const exp = new Date(doc.expiryDate);
+                        exp.setHours(0, 0, 0, 0);
+                        const diff = Math.ceil((exp.getTime() - now.getTime()) / 86_400_000);
+                        const isUrgent = diff <= 45;
+
+                        return (
+                          <div>
+                            <span className={`block font-bold ${isUrgent ? 'text-red-600' : 'text-gray-900'}`}>
+                              {formatDate(doc.expiryDate)}
+                            </span>
+                            {isUrgent && (
+                              <span className="inline-flex items-center gap-1 mt-0.5 text-[9px] font-black uppercase tracking-wider bg-red-600 text-white px-1.5 py-0.5 rounded shadow-2xs">
+                                <AlertTriangle size={9} />
+                                {diff < 0 ? 'Expired' : `Expires in ${diff} days`}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })() : (
+                        <span className="font-medium text-gray-900">Permanent / Valid</span>
+                      )}
                     </div>
                     <div className="col-span-2 pt-1 border-t border-gray-100">
                       <span className="text-gray-400 block text-[10px]">National Student ID / APAAR</span>
@@ -332,6 +354,30 @@ export function DocumentModal({ document: doc, student, onClose }: DocumentModal
                     </div>
                   </div>
                 </div>
+
+                {/* Expiry Warning Callout */}
+                {doc.expiryDate && (() => {
+                  const now = new Date();
+                  now.setHours(0, 0, 0, 0);
+                  const exp = new Date(doc.expiryDate);
+                  exp.setHours(0, 0, 0, 0);
+                  const diff = Math.ceil((exp.getTime() - now.getTime()) / 86_400_000);
+                  if (diff > 45) return null;
+
+                  return (
+                    <div className="bg-red-50 border-2 border-red-300 rounded-xl p-3 text-xs flex items-start gap-2.5">
+                      <div className="w-6 h-6 rounded-lg bg-red-600 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                        <AlertTriangle size={13} className="text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-red-900 leading-snug">Document Renewal Required</p>
+                        <p className="text-[11px] text-red-700 mt-0.5 leading-relaxed">
+                          This {doc.name} will expire in <span className="font-extrabold text-red-900 bg-red-100 px-1 py-0.2 rounded">{diff} days</span> (Valid till {formatDate(doc.expiryDate)}). Please initiate renewal with Tahsildar / MeeSeva to avoid scholarship holds.
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Digital Locker Hash Certificate */}
                 <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 text-xs space-y-1">

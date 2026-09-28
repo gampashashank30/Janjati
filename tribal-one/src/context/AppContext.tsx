@@ -20,14 +20,25 @@ interface AppContextType {
   activeTab: NavTab;
   language: Language;
   unreadCount: number;
+  /** Deep-link filter for ScholarshipsScreen, consumed once and reset to null */
+  scholarshipFilter: string | null;
+  /** Deep-link programme ID for ProgrammesScreen */
+  selectedProgrammeId: string | null;
   login: (method: string, credential: string) => Promise<void>;
   logout: () => void;
   setActiveTab: (tab: NavTab) => void;
+  /** Navigate to Scholarships tab with a pre-set filter */
+  navigateToScholarships: (filter: string | null) => void;
+  /** Navigate to Programmes tab with optional specific programme pre-selected */
+  navigateToProgramme: (programmeId: string | null) => void;
   setLanguage: (lang: Language) => void;
   t: (key: TranslationKey) => string;
   markNotificationRead: (id: string) => void;
   markAllRead: () => void;
   uploadDocument: (docId: string) => void;
+  submitApplication: (app: Application) => void;
+  clearScholarshipFilter: () => void;
+  clearSelectedProgramme: () => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -78,12 +89,41 @@ const DEMO_APPLICATIONS: Application[] = [
     applicationNumber: 'MH-POM-2024-0041872',
     remarks: 'Amount sanctioned and DBT credit initiated.',
   },
+  {
+    id: 'APP-2024-NFST-00219',
+    schemeId: 'nfst',
+    schemeName: 'National Fellowship for ST Students (NFST)',
+    status: 'rejected',
+    submittedDate: '2024-09-18',
+    lastUpdated: '2024-11-05',
+    amountApplied: 25000,
+    applicationNumber: 'MH-NFST-2024-0041872',
+    remarks: 'Application rejected at District Verification level due to expired Income Certificate.',
+    rejectionDetail: {
+      stage: 'district',
+      rejectedBy: 'District Nodal Officer, Nandurbar (Tribal Welfare Department)',
+      rejectedOn: '2024-11-05',
+      reasonCode: 'DOC_EXPIRED',
+      reasonTitle: 'Income Certificate Expired / Invalid',
+      reasonDescription:
+        'The Income Certificate submitted with your application (Cert. No. NDB-IC-2023-0418) was issued on 14 March 2023 and had expired before the application deadline. As per NSP guidelines, income certificates must be issued within the same financial year as the application. The District Nodal Officer could not verify your income eligibility and the application was rejected at District level.',
+      faultDocument: 'Income Certificate (Cert. No. NDB-IC-2023-0418)',
+      canReapply: true,
+      nextSteps: [
+        'Obtain a fresh Income Certificate from the Tehsildar (Revenue Department), Nandurbar — valid for financial year 2025–26.',
+        'Ensure the certificate is signed by a Revenue Officer of Tehsildar rank or above and bears an official seal.',
+        'Upload the new certificate to your NSP profile under "Document Wallet" before applying.',
+        'When the NFST application window reopens (typically August–October), submit a fresh application on the NSP portal at scholarships.gov.in.',
+        'After submission, track Institute → District → State verification steps to avoid a repeat rejection.',
+      ],
+    },
+  },
 ];
 
 const DEMO_DOCUMENTS: UserDocument[] = [
   { id: 'doc-1', type: 'aadhaar', name: 'Aadhaar Card', status: 'verified', uploadDate: '2024-07-10', verifiedBy: 'DigiLocker' },
   { id: 'doc-2', type: 'st_certificate', name: 'ST Certificate', status: 'verified', uploadDate: '2024-07-10', expiryDate: '2029-07-09', verifiedBy: 'District Collector, Nandurbar' },
-  { id: 'doc-3', type: 'income_certificate', name: 'Income Certificate', status: 'verified', uploadDate: '2025-05-02', expiryDate: '2026-04-30', verifiedBy: 'Tehsildar, Nandurbar' },
+  { id: 'doc-3', type: 'income_certificate', name: 'Income Certificate', status: 'verified', uploadDate: '2025-05-02', expiryDate: '2026-11-02', verifiedBy: 'Tehsildar, Nandurbar' },
   { id: 'doc-4', type: 'domicile', name: 'Domicile Certificate', status: 'verified', uploadDate: '2024-07-12', verifiedBy: 'Revenue Department, Maharashtra' },
   { id: 'doc-5', type: 'marksheet_10', name: 'Class X Marksheet (CBSE)', status: 'verified', uploadDate: '2024-07-15', verifiedBy: 'CBSE DigiLocker' },
   { id: 'doc-6', type: 'marksheet_12', name: 'Class XII Marksheet (CBSE)', status: 'verified', uploadDate: '2025-06-10', verifiedBy: 'CBSE DigiLocker' },
@@ -173,11 +213,13 @@ const DEMO_PAYMENTS: PaymentRecord[] = [
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [student, setStudent] = useState<Student | null>(null);
-  const [applications] = useState<Application[]>(DEMO_APPLICATIONS);
+  const [applications, setApplications] = useState<Application[]>(DEMO_APPLICATIONS);
   const [documents, setDocuments] = useState<UserDocument[]>(DEMO_DOCUMENTS);
   const [notifications, setNotifications] = useState<Notification[]>(DEMO_NOTIFICATIONS);
   const [payments] = useState<PaymentRecord[]>(DEMO_PAYMENTS);
   const [activeTab, setActiveTab] = useState<NavTab>('home');
+  const [scholarshipFilter, setScholarshipFilter] = useState<string | null>(null);
+  const [selectedProgrammeId, setSelectedProgrammeId] = useState<string | null>(null);
   const [language, setLanguageState] = useState<Language>(() => {
     try {
       const saved = localStorage.getItem('tribal_one_lang') as Language | null;
@@ -224,6 +266,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setActiveTab('home');
   }, []);
 
+  const navigateToScholarships = useCallback((filter: string | null) => {
+    setScholarshipFilter(filter);
+    setActiveTab('scholarships');
+  }, []);
+
+  const clearScholarshipFilter = useCallback(() => {
+    setScholarshipFilter(null);
+  }, []);
+
+  const navigateToProgramme = useCallback((programmeId: string | null) => {
+    setSelectedProgrammeId(programmeId);
+    setActiveTab('programmes');
+  }, []);
+
+  const clearSelectedProgramme = useCallback(() => {
+    setSelectedProgrammeId(null);
+  }, []);
+
   const markNotificationRead = useCallback((id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
@@ -244,6 +304,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
+  const submitApplication = useCallback((newApp: Application) => {
+    setApplications((prev) => {
+      const idx = prev.findIndex((a) => a.schemeId === newApp.schemeId);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = newApp;
+        return next;
+      }
+      return [newApp, ...prev];
+    });
+
+    const notif: Notification = {
+      id: `notif-${Date.now()}`,
+      title: 'Application Submitted',
+      message: `Your scholarship application for ${newApp.schemeName} (${newApp.applicationNumber || 'Ref #' + Date.now().toString().slice(-6)}) has been submitted successfully.`,
+      timestamp: new Date().toISOString(),
+      read: false,
+      type: 'info',
+      schemeId: newApp.schemeId,
+    };
+    setNotifications((prev) => [notif, ...prev]);
+  }, []);
+
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
@@ -257,15 +340,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         payments,
         activeTab,
         language,
+        scholarshipFilter,
+        selectedProgrammeId,
         unreadCount,
         login,
         logout,
         setActiveTab,
+        navigateToScholarships,
+        clearScholarshipFilter,
+        navigateToProgramme,
+        clearSelectedProgramme,
         setLanguage,
         t,
         markNotificationRead,
         markAllRead,
         uploadDocument,
+        submitApplication,
       }}
     >
       {children}
